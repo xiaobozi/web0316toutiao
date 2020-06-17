@@ -1,6 +1,6 @@
 <template>
     <ul >
-        <li v-for='(item,index) in data' :key='index' class="text" ref='list'>
+        <li v-for='(item,index) in resdata' :key='index' class="text" ref='list'>
                 <img :src="item.img" v-if="item.img"  class="img">
                 <div class="right">
                     <p @click='goDetail(item.nid)'> {{item.title}}</p>
@@ -17,24 +17,17 @@
 <script>
 import { mapState } from 'vuex'
 import { mapMutations } from 'vuex'
-import { Loading } from 'element-ui';
 export default {
     data(){
         return {
             num:10,
             now:1,
             resdata:[],
+            page: 0
         }
     },
     computed: {
             ...mapState(['userinfo']),
-            data(){
-                if(this.resdata.length > this.num){
-                    this.resdata.slice(0,this.num * this.now)
-                    return this.resdata.slice(0,this.num * this.now)
-                }
-                return this.resdata
-            }
         },
     methods:{
         ...mapMutations(['setSearchData','setScrollHandle']),
@@ -46,21 +39,11 @@ export default {
              if(!flag)return;
                 let s =  document.documentElement.scrollTop + document.documentElement.clientHeight 
                 if(document.body.offsetHeight-200 <  s){
-                    if(this.data.length == this.resdata.length){
-                        return flag =false
-                    };
-                    let loadingInstance=Loading.service({
-                        target : this.$refs.list[this.$refs.list.length-1],
-                        text:'加载中'
-                    });
                     flag = false
-                    setTimeout(()=>{
-                        this.now++
-                        this.$nextTick(() => { 
-                        loadingInstance.close();
-                        });
-                        flag = true
-                    },1000)
+                    this.$axios.get(`/getArticles?page=${++this.page}`).then(res=>{
+                        this.resdata = [...this.resdata,...res.articles]
+                        this.setSearchData(this.resdata)
+                    })
                 }
         }
     },
